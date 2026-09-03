@@ -1,0 +1,27 @@
+"""OWASP Mobile Application Security Verification Standard (MASVS) controls."""
+
+OWASP_MASVS_CONTROLS = [
+    {"category": "authentication", "question": "Does the application enforce multi-factor authentication (MFA) for account access?", "description": "MFA should be required for login and for high-risk transactions.", "weight": 1.5, "framework_reference": "MASVS-AUTH-1"},
+    {"category": "authentication", "question": "Are passwords stored using a strong adaptive hashing algorithm (bcrypt, Argon2, PBKDF2)?", "description": "Passwords must never be stored in plaintext or with a weak/fast hash.", "weight": 1.5, "framework_reference": "MASVS-AUTH-2"},
+    {"category": "authentication", "question": "Does the platform implement secure session management with automatic timeout?", "description": "Sessions should expire after a period of inactivity and on logout.", "weight": 1.2, "framework_reference": "MASVS-AUTH-3"},
+    {"category": "authentication", "question": "Is there a secure, identity-verified password reset / account recovery mechanism?", "description": "Password reset should not be guessable or bypassable.", "weight": 1.0, "framework_reference": "MASVS-AUTH-4"},
+    {"category": "authentication", "question": "Does the app implement biometric authentication safely (no fallback to insecure storage)?", "description": "Biometric auth must be backed by the platform's secure enclave / keystore.", "weight": 1.0, "framework_reference": "MASVS-AUTH-5"},
+    {"category": "authentication", "question": "Are authentication attempts rate-limited and accounts locked after repeated failures?", "description": "Protects against brute-force and credential-stuffing attacks.", "weight": 1.2, "framework_reference": "MASVS-AUTH-6"},
+
+    {"category": "encryption", "question": "Is all data in transit encrypted using TLS 1.2 or higher (preferably TLS 1.3)?", "description": "All API/network traffic should use strong transport encryption.", "weight": 1.5, "framework_reference": "MASVS-CRYPTO-1"},
+    {"category": "encryption", "question": "Is sensitive data at rest encrypted using AES-256 or equivalent?", "description": "Data in databases, backups and local storage should be encrypted.", "weight": 1.5, "framework_reference": "MASVS-CRYPTO-2"},
+    {"category": "encryption", "question": "Does the app implement certificate pinning to prevent man-in-the-middle attacks?", "description": "Pinning prevents interception via rogue/forged certificates.", "weight": 1.0, "framework_reference": "MASVS-CRYPTO-3"},
+    {"category": "encryption", "question": "Are cryptographic keys managed via a secure key management service / vault?", "description": "Keys should not be hard-coded or stored alongside encrypted data.", "weight": 1.2, "framework_reference": "MASVS-CRYPTO-4"},
+    {"category": "encryption", "question": "Does the platform avoid use of deprecated/broken algorithms (MD5, SHA-1, DES, RC4)?", "description": "Only modern, vetted cryptographic primitives should be in use.", "weight": 1.0, "framework_reference": "MASVS-CRYPTO-5"},
+
+    {"category": "api_security", "question": "Are all API endpoints protected by authentication and authorization checks?", "description": "No endpoint should be reachable without proper access control.", "weight": 1.5, "framework_reference": "MASVS-PLATFORM-1"},
+    {"category": "api_security", "question": "Does the API validate and sanitize all client-supplied input server-side?", "description": "Prevents injection attacks (SQLi, command injection, etc.).", "weight": 1.5, "framework_reference": "MASVS-PLATFORM-2"},
+    {"category": "api_security", "question": "Is the API protected against excessive data exposure (returns only necessary fields)?", "description": "APIs should not leak internal fields, stack traces or PII unnecessarily.", "weight": 1.0, "framework_reference": "MASVS-PLATFORM-3"},
+    {"category": "api_security", "question": "Is API rate limiting / throttling implemented to prevent abuse and DoS?", "description": "Protects against automated abuse, scraping and denial of service.", "weight": 1.0, "framework_reference": "MASVS-PLATFORM-4"},
+    {"category": "api_security", "question": "Are API keys/secrets rotated regularly and never embedded in client code?", "description": "Client-side secrets are trivially extractable and must be avoided.", "weight": 1.0, "framework_reference": "MASVS-PLATFORM-5"},
+
+    {"category": "data_storage", "question": "Is sensitive data (BVN, card data, PINs) excluded from local/client-side storage?", "description": "Sensitive data should stay server-side wherever possible.", "weight": 1.5, "framework_reference": "MASVS-STORAGE-1"},
+    {"category": "data_storage", "question": "Does the app clear sensitive data from memory/cache after use?", "description": "Prevents recovery of sensitive data from device memory or cache.", "weight": 1.0, "framework_reference": "MASVS-STORAGE-2"},
+    {"category": "data_storage", "question": "Are backups of sensitive data encrypted and access-controlled?", "description": "Backups are a common but overlooked source of data leakage.", "weight": 1.0, "framework_reference": "MASVS-STORAGE-3"},
+    {"category": "data_storage", "question": "Does the platform comply with NDPR / data-minimisation principles for customer data?", "description": "Collect and retain only the data necessary for the service.", "weight": 1.0, "framework_reference": "MASVS-STORAGE-4"},
+]
