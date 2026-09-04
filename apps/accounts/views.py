@@ -17,7 +17,16 @@ User = get_user_model()
 
 
 def _client_ip(request):
-    return request.META.get("HTTP_X_FORWARDED_FOR", request.META.get("REMOTE_ADDR", "unknown"))
+    """
+    Get the real client IP address.
+    Handles proxies (Render/Cloudflare) that send comma-separated IPs.
+    """
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if x_forwarded_for:
+        # Get the FIRST IP from the comma-separated list
+        ip = x_forwarded_for.split(",")[0].strip()
+        return ip
+    return request.META.get("REMOTE_ADDR", "unknown")
 
 
 def log_action(user, action, request, **details):
@@ -45,8 +54,7 @@ class RegisterView(generics.CreateAPIView):
 @method_decorator(ratelimit(key="ip", rate="5/m", method="POST", block=True), name="post")
 class LoginView(TokenObtainPairView):
     """
-    JWT login, rate-limited to mitigate credential-stuffing / brute force
-    (django-axes also enforces account lockout at the auth-backend level).
+    JWT login, rate-limited to mitigate credential-stuffing / brute force.
     """
     serializer_class = CustomTokenObtainPairSerializer
 
@@ -55,6 +63,7 @@ class LoginView(TokenObtainPairView):
         if response.status_code == 200:
             try:
                 user = User.objects.get(email=request.data.get("email"))
+                # FIX: Use _client_ip() which handles proxy IPs
                 user.last_login_ip = _client_ip(request)
                 user.failed_login_attempts = 0
                 user.save(update_fields=["last_login_ip", "failed_login_attempts"])
@@ -97,29 +106,23 @@ class AdminUserListView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        # Get pagination parameters
         page = int(request.GET.get("page", 1))
         page_size = int(request.GET.get("page_size", 10))
         
-        # Get all users ordered by newest first
         all_users = User.objects.all().order_by("-created_at")
         
-        # Calculate pagination
         total_count = all_users.count()
         total_pages = (total_count + page_size - 1) // page_size
         
-        # Ensure page is valid
         if page < 1:
             page = 1
         if page > total_pages and total_pages > 0:
             page = total_pages
         
-        # Get the current page's users
         start = (page - 1) * page_size
         end = start + page_size
         users = all_users[start:end]
         
-        # Build response
         data = {
             "count": total_count,
             "next": page + 1 if page < total_pages else None,
@@ -165,29 +168,23 @@ class AuditLogListView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        # Get pagination parameters
         page = int(request.GET.get("page", 1))
         page_size = int(request.GET.get("page_size", 10))
         
-        # Get all logs ordered by newest first
         all_logs = AuditLog.objects.select_related("user").all().order_by("-created_at")
         
-        # Calculate pagination
         total_count = all_logs.count()
         total_pages = (total_count + page_size - 1) // page_size
         
-        # Ensure page is valid
         if page < 1:
             page = 1
         if page > total_pages and total_pages > 0:
             page = total_pages
         
-        # Get the current page's logs
         start = (page - 1) * page_size
         end = start + page_size
         logs = all_logs[start:end]
         
-        # Build response
         data = {
             "count": total_count,
             "next": page + 1 if page < total_pages else None,

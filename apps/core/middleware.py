@@ -4,22 +4,19 @@ import time
 
 logger = logging.getLogger("security")
 
-SENSITIVE_KEYS = {"password", "password2", "old_password", "new_password", "token", "refresh", "access"}
 
-
-def _scrub(data):
-    if not isinstance(data, dict):
-        return data
-    return {k: ("***" if k.lower() in SENSITIVE_KEYS else v) for k, v in data.items()}
+def get_client_ip(request):
+    """Get the real client IP, handling proxies."""
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0].strip()
+        return ip
+    return request.META.get("REMOTE_ADDR", "unknown")
 
 
 class AuditLogMiddleware:
     """
-    Logs every state-changing API request (method, path, user, IP, status,
-    latency) for traceability — a core control expected by NIST CSF
-    (Detect / Respond) and the CBN Risk-Based Cybersecurity Framework.
-    Full structured entries are additionally persisted via
-    apps.accounts.models.AuditLog from within the relevant views.
+    Logs every state-changing API request for traceability.
     """
 
     def __init__(self, get_response):
@@ -32,7 +29,7 @@ class AuditLogMiddleware:
             duration_ms = round((time.time() - start) * 1000, 1)
             user = getattr(request, "user", None)
             username = getattr(user, "email", "anonymous") if user and user.is_authenticated else "anonymous"
-            ip = request.META.get("HTTP_X_FORWARDED_FOR", request.META.get("REMOTE_ADDR", "unknown"))
+            ip = get_client_ip(request)
             logger.info(json.dumps({
                 "event": "api_request",
                 "method": request.method,
